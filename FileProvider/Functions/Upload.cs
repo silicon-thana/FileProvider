@@ -24,7 +24,7 @@ namespace FileProvider.Functions
                 {
                     var containerName = !string.IsNullOrEmpty(req.Query["containerName"]) ? req.Query["containerName"].ToString() : "files";
 
-                    var FileEntity = new FileEntity 
+                    var fileEntity = new FileEntity 
                     { 
                         FileName = _fileService.SetFileName(file),
                         ContentType = file.ContentType,
@@ -33,13 +33,16 @@ namespace FileProvider.Functions
                     };
 
 
-                    await _fileService.SetBlobContainerAsync(FileEntity.ContainerName);
-                    var filePath = await _fileService.UploadFileAsync(file, FileEntity);
-                    FileEntity.FilePath = filePath;
+                    await _fileService.SetBlobContainerAsync(fileEntity.ContainerName);
+                    var filePath = await _fileService.UploadFileAsync(file, fileEntity);
+                    fileEntity.FilePath = filePath;
 
-                    await _fileService.SaveToDatabaseAsync(FileEntity);
+                    await _fileService.RemoveFileIfNotExistsAsync(fileEntity);
 
-                    return new OkObjectResult(FileEntity);
+
+                    await _fileService.SaveToDatabaseAsync(fileEntity);
+
+                    return new OkObjectResult(fileEntity);
                 }
             }
             catch (Exception ex)

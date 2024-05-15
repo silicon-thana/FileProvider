@@ -11,5 +11,7 @@ namespace FileProvider.Services
         Task<string> UploadFileAsync(IFormFile file, FileEntity fileEntity);
 
         Task SaveToDatabaseAsync(FileEntity fileEntity);
+
+        Task RemoveFileIfNotExistsAsync(FileEntity fileEntity);
     }
 }

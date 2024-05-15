@@ -16,37 +16,86 @@ public class FileService(ILogger<FileService> logger, DataContext context, BlobS
 
     public async Task SetBlobContainerAsync(string containerName)
     {
-        _container = _client.GetBlobContainerClient(containerName);
-        await _container.CreateIfNotExistsAsync();
-    }
-
-    public string SetFileName (IFormFile file)
-    {
-        var fileName = $"{Guid.NewGuid()}.{file.FileName}";
-        return fileName ;
-    }
-
-    public async Task<string> UploadFileAsync (IFormFile file, FileEntity fileEntity)
-    {
-        BlobHttpHeaders headers = new()
+        try
         {
-            ContentType = file.ContentType,
-        };
+            _container = _client.GetBlobContainerClient(containerName);
+            await _container.CreateIfNotExistsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"ERROR: FileService.SetBlobContainerAsync :: {ex.Message}");
+        }
+    }
 
-        var blobClient = _container!.GetBlobClient(fileEntity.FileName);
+    public string SetFileName(IFormFile file)
+    {
+        try
+        {
+            var fileName = $"{Guid.NewGuid()}.{file.FileName}";
+            return fileName;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"ERROR: FileService.SetFileName :: {ex.Message}");
+            throw; 
+        }
+    }
 
-        using var stream = file.OpenReadStream();
-        await blobClient.UploadAsync(stream, headers);
+    public async Task<string> UploadFileAsync(IFormFile file, FileEntity fileEntity)
+    {
+        try
+        {
+            BlobHttpHeaders headers = new()
+            {
+                ContentType = file.ContentType,
+            };
 
-        return blobClient.Uri.ToString();
+            var blobClient = _container!.GetBlobClient(fileEntity.FileName);
 
+            using var stream = file.OpenReadStream();
+            await blobClient.UploadAsync(stream, headers);
+
+            return blobClient.Uri.ToString();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"ERROR: FileService.UploadFileAsync :: {ex.Message}");
+            throw; 
+        }
     }
 
     public async Task SaveToDatabaseAsync(FileEntity fileEntity)
     {
-        _context.Files.Add(fileEntity);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Files.Add(fileEntity);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"ERROR: FileService.SaveToDatabaseAsync :: {ex.Message}");
+            throw; 
+        }
+    }
 
+    public async Task RemoveFileIfNotExistsAsync(FileEntity fileEntity)
+    {
+        try
+        {
+            var blobClient = _container!.GetBlobClient(fileEntity.FileName);
+            var exists = await blobClient.ExistsAsync();
+
+            if (!exists)
+            {
+                _context.Files.Remove(fileEntity);
+                await _context.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"ERROR: FileService.RemoveFileIfNotExistsAsync :: {ex.Message}");
+            throw; 
+        }
     }
 
 }
