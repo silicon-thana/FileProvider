@@ -1,10 +1,10 @@
-﻿using Data.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Data.Entities;
 
-namespace Data.Contexts;
-
-public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
+namespace Data.Contexts
 {
-    public DbSet<FileEntity> Files { get; set; }
-
+    public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
+    {
+        public DbSet<FileEntity> Files { get; set; }
+    }
 }
